@@ -1,0 +1,40 @@
+BACKUP - Redundancia de dados com o proposito específico de restauraçao no caso de perda dos originais. 
+- Importante considerar relação custo / risco.
+Um backup eficiente é aquele que minimiza os impactos de uma perda de dados, provendo maneiras de restaurar dados e/ou serviços dentro de um tempo tolerável de indisponibilidade, e com desatualização razoável de informações. Se meu tempo de indisponibilidade é 2 horas, meu storage permite restaurar todos os dados em 2 horas? São questões a se considerar. É suficiente backup diário para compras de açoes na bolsas? Etc. 
+
+Backups podem ser influenciados pela natureza dos dados, necessidades de negócio e infraestrutura disponível. A janela de backup (tem aplicaçoes que voce pode não fazer backup do momento, q voce pode precisar pro banco de dados, etc), tempos de retenção, periodicidade (diariamente, semanalmente vou precisar fazer backup?) e disponibilidade de capacidade em storage também devem ser considerados. 
+
+Dispositivos de armazenamento mais comuns:
+- Midia Otica (nunca muito utilizado)
+- Fitas Magneticas (p medias e grandes empresas ainda sao bem utilizados, custos alto mas custo por gigaByte baixo)
+- Discos Rígidos (aumento de confiabilidade e diminuiçao do custo por gigabyte)
+
+Topologia do Backup 
+- Descentralizado (varias maquinas e cada uma com espaço para fita magnetica e fazer backup nelas. modo antigo. muito trabalhoso.)
+- Centralizado (voce tem um servidor de backup, tem clientes nas maquinas de onde quer extrair o backup)
+- Backup em nuvem (mesma ideia do centralizado, mas voce pode estar armazenando seus dados em um servidor através da Internet.)
+
+---
+
+Melhores práticas de backup -
+- Testar a conexão com novos clientes
+- Simular e testar novos jobs de backup 
+- Testar a restauraçao de novos jobs 
+- Testar a restauraçao de aplicaçoes específicas
+- Realizar testes de restauraçao periodicos. 
+
+Mais importante que o backup é o restore, e pra garantir o restore é com teste. 
+
+Política de backup corporativa -
+Backup de bancos de dados devem ter retenção de 1 ano; mensagems de email 6 meses, etc. 
+
+- Backups diferenciais serão realizados diariamente, se segunda à quinta-feira. Backups full serão executados semanalmente nas sextas-feiras. 
+- Mídias obsoletas de backup serão incineradas ou picotados antes de serem descartados. 
+
+- O sistema de backup é crítico por si e deve ter a maior disponibilidade possível (redundancia de energia, maior fonte de energia, replicação do banco de dados de backup, etc).
+
+- Informar por escrito para o usuário ou gestor quais dados estao sendo protegidos por backup, ou não, o tempo, etc.; 
+
+Automação:
+- Operações de backup devem requerer a menor intervenção humana possível.
+- Robos de fita devem requerer o minimo possivel de substituiçoes manuais de fitas (ou quase nenhuma substuiçao, comprar mais gaveta p/ gravar mais fitas possíveis)
