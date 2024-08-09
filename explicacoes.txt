@@ -38,3 +38,63 @@ Backup de bancos de dados devem ter retenção de 1 ano; mensagems de email 6 mese
 Automação:
 - Operações de backup devem requerer a menor intervenção humana possível.
 - Robos de fita devem requerer o minimo possivel de substituiçoes manuais de fitas (ou quase nenhuma substuiçao, comprar mais gaveta p/ gravar mais fitas possíveis)
+
+////
+
+Mitos do backup -
+Retorno do investimento para o serviço de backup -
+- Impossivel de ser mensurado 
+- Ajuda a entender a resistencia de alguns gestores de investir em backup 
+- Custo deve ser tratado como apolice de seguros; 
+
+Backup vs sistemas de altia disponibilidade (ex: RAID):
+- Diferentes funçoes 
+- soluçoes de alta disponibilidade nao fornecem informaçao historica (ex: infos de 1 ano atrás)
+- "Nada corrompe mais rapido que um espelho"
+
+Custo de backup vs riscos -
+- Nao existe sistemas de backup 100% seguro 
+- Backup remoto ou cofre anti-chamas? 
+- backups redundantes?
+- backups de hora em hora? 
+
+"É melhor usar scripts a ferramentas de backup":
+- Nenhuma interoperabilidade 
+- Mais difícil centralizar os backups (montagens smb, ftp ou nfs possume limitaçoes de perfomance)
+- Alta complexidade 
+- Perfomance ruim; 
+
+//////////////////
+
+Glossário -
+
+- Retenção: (importante)
+Período de tempo no qual os dados backupeados não podem ser sobrescritos ou apagados dos volumes de backup (A não ser que haja intervenção humana); O ideal é que o bacula seja automatizada, que o proprio bacula sobrescreva após um tempo; 
+
+- Expiração:
+Término da retençao de backup: tipicamente permite que a ferramenta de backup sobrescreva o volume expirado caso novos jobs de backup necessitem de espaço para serem gravados. O fato de ter expirado não significa que nao posso mais restaurar os dados antigos, é melhor gravar em fitas virgens caso tenha espaço, ao invés de reciclar aquele volume; 
+
+- Job: 
+Unidade de operação da ferramenta de backup. 
+Evento único com duração finita. Basicamente podem ser jobs de backup (Escrita) ou restauração (leitura). 
+
+Existem outros tipos de backups providos pelo backupa, a exemplo do job de cópia (é de storage para storage, não preciso acessar o servidor original) ou migração, desduplicação ou verificação. 
+
+- Purge (é tipo eliminar o mal): 
+Ato de permitir que informaçoes a respeito de um determinadao volume sejam sobrescritas (reciclagem). Também deleta indices do volume no banco de dados do Bacula. Geralmente é executado automaticamente quando o volume é expirado e outro job de backup precisa de espaço para gravação; Vai purgar o volume que contem informaçoes sobre o backup, e depois que purgar pode escrever informaçoes no volume/fita. 
+
+- Volume: 
+não é uma partição de hd. 
+- Divisão Lógica na qual a ferramente de backup pode armazenar dados de diferentes servidores, na forma de uma sequencia de bytes;
+- Para backups em disco, os volumes sao arquivos (e um disco pode conver vários volumes/arquivos)
+- Para as fitas magnéticas, o volume se confunde com a propria fita (uma fita pode conter apenas um volume )
+
+é tipo uma caixa onde a ferramenta de backup estará jogando os dados. no volume nao tenho sistema de arquivos, o disco tem um sistema de arquivos, mas o volume em si, os dados onde tao jogando os dados/sequencia de bytes, não tem. 
+
+o bacula precisa de volume para gravar os dados de backup, o volume precisa ter tamanho q comporte os backups. posso ter jobs de backup que ocupem mais de uma fita ou mais de um volume de disco;  no caso de fita magnetica, so posso ter um volume por fita, entao o volume terá a mesma capacidade da sua fita; 
+
+a reciclagem de volumes é uma transaçao atomica: ou eu descarto todos os dados nele, ou descarto nada; isso para fita é ruim. por isto, para backups de disco é deve-se priorizar ter varios volumes de backup no msm disco. 
+
+é muito mais inteligente criar volumes de 25GB, 50GB e o bacula vai ter 20 volumes de backup de 50GB num disco de 1TB, então se o Bacula reciclar vai reciclar somente um volume de 50GB, vai perder somente uma parte dos dados; se eu tiver 1 disco so de 1TB, se eu tiver apenas um volume, na hora de eu reciclar vou perder todos os backups que tenho nesse disco de 1TB; 
+
+- Pool: 
