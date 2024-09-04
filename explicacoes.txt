@@ -78,7 +78,7 @@ Término da retençao de backup: tipicamente permite que a ferramenta de backup so
 Unidade de operação da ferramenta de backup. 
 Evento único com duração finita. Basicamente podem ser jobs de backup (Escrita) ou restauração (leitura). 
 
-Existem outros tipos de backups providos pelo backupa, a exemplo do job de cópia (é de storage para storage, não preciso acessar o servidor original) ou migração, desduplicação ou verificação. 
+Existem outros tipos de backups providos pelo bacula, a exemplo do job de cópia (é de storage para storage, não preciso acessar o servidor original) ou migração, desduplicação ou verificação. 
 
 - Purge (é tipo eliminar o mal): 
 Ato de permitir que informaçoes a respeito de um determinadao volume sejam sobrescritas (reciclagem). Também deleta indices do volume no banco de dados do Bacula. Geralmente é executado automaticamente quando o volume é expirado e outro job de backup precisa de espaço para gravação; Vai purgar o volume que contem informaçoes sobre o backup, e depois que purgar pode escrever informaçoes no volume/fita. 
@@ -98,3 +98,74 @@ a reciclagem de volumes é uma transaçao atomica: ou eu descarto todos os dados n
 é muito mais inteligente criar volumes de 25GB, 50GB e o bacula vai ter 20 volumes de backup de 50GB num disco de 1TB, então se o Bacula reciclar vai reciclar somente um volume de 50GB, vai perder somente uma parte dos dados; se eu tiver 1 disco so de 1TB, se eu tiver apenas um volume, na hora de eu reciclar vou perder todos os backups que tenho nesse disco de 1TB; 
 
 - Pool: 
+É um grupo de volumes que devem ter as mesmas propriedades (Ex: retenção) 
+
+Todo job de backup é submetido para uma pool e só pode ser gravado em volumes que pertencem àquela pool 
+
+Todos os volumes de uma pool devem utilizar volumes de um mesmo dispositivo de armazenamento. 
+
+Dentro do banco de dados do Bacula teremos as pools de backup. 
+
+- Catálogo: 
+Banco de dados da ferramenta de backup que contém o índice de todos os arquivos backupeados. 
+
+Toda ferramenta de backup tem um banco de dados, importante para saber onde tá cada dado, etc. É através do banco de dados q vc consegue listar os conteúdos de um backup, para restaurar. 
+
+Permite listar os conteúdos de um backup e restaurar apenas alguns arquivos de determinado job;
+
+Provê associação entre os jobs e os volumes que contem dados dos respectivos backups; 
+
+Bacula é a única ferramenta de mercado multi-banco-de-dados;
+Seu catálogo pode ser instalado em mysql, postgresql e sqlite; 
+
+- FileSet:
+
+Lista de arquivos ou diretórios que serão copiados pelos jobs que a utilizarem; 
+
+Você pode incluir ou excluir diretórios do seu FileSet; 
+
+Ex: incluir / (raiz) para um servidor Linux e excluir /tmp, /proc, etc. 
+
+- Política de backup:
+Documento corporativo formal que descreve os períodos de retenção, periodicidade e outros aspectos do serviço de backup.
+
+Indispensável para o planejamento do backup, gerência de capacidade e previsão do crescimento dos backups; 
+
+- GFS (grandfather, father, son) backup 
+Esquema de rotação de backups mais utilizado no mundo;
+Utiliza diferentes níveis de retenção, normalmente distribuídos entre backups diários, semanais e mensais; 
+
+- On(/Off)-site backup: a cópia de segurança é armazenada no mesmo prédio dos dados originais (ou não = off-site); 
+
+//////////////////
+
+Níveis de Backup - 
+Temos 3 tipos básicos de backup
+
+- Full: 
+Sempre copia todos os arquivos e diretórios incluídos no FileSet
+
+Backups full são geralmente agendados para a execuçao as sextas ou sabados, à medida que geralmente existem menos usuarios utilizando os sistemas e janelas de backup maiores; 
+ 
+Um backup full (como qualquer outro) pode ocupar um ou mais volumes. Bacula grava backups em multiplos volumes automaticamente; 
+
+- Diferenciais/Incrementais - 
+
+presumindo que tenha sido realizado um backup full numa sexta anterior de determinado servidor contendo os arquivos x,y e z.
+
+Se na segunda o arquivo 'x' for modificado, no backup incremental ele vai copiar somente x. no backup diferencial, por enquanto, somente x. 
+se na terça o arquivo 'y' foi modificado, no backup incremental ele irá copiar somente y. no backup diferencial, ele irá copiar 'x' e 'y'.
+se na quarta o arquivo 'z' foi modificado, no backup incremental ele irá copiar somente 'z'. no backup diferencial, ele irá copiar 'x, y e z'
+
+o diferencial copia tudo que foi diferente em relaçao ao ultimo backup full;  já o 'incremental' não, tudo q foi modificado ele incrementa ao backup; 
+
+o 'backup diferencial' ocupa mais espaço de arquivo no armazenamento. já os backups incrementais ocupam menos espaço em armazenamento. 
+
+agora, a restauraçao do backup diferencial é mais simples pois irá requerer no maximo o acesso a dois trabalhos realizados (ultimo backup full e ultimo diferencial). O backup incremental poderá requerer o acesso a até 5 trabalhos de backup anteriormente realizados (provavelmente em volumes diferentes). 
+
+-> O backup diferencial contém apenas arquivos que foram modificados após o ultimo backup full;
+O backup incremental copia apenas arquivos que tenham sido modificados após o término de qualquer job de backup, não importa o nível; 
+
+/////////////////
+
+Estratégia de Backup GFS- 
