@@ -168,4 +168,43 @@ O backup incremental copia apenas arquivos que tenham sido modificados após o té
 
 /////////////////
 
-Estratégia de Backup GFS- 
+Estratégia de Backup GFS - 
+GFS é grand, father e son em ingles (avô, pai e filho). 
+
+Hierarquia de backups -
+Backups diarios: sons (filhos)
+Backups semanais (fathers - pais)
+Backups mensais (grandfathers - avôs)
+
+Backups diários - reciclados a cada 7 dias (dentro desse período um backup full semanal ou mensal deve ser realizado).
+
+Backups semanais - reciclados a cada 30 dias (neste período um backup full mensal deve ser realizado; full mensal fica por mais tempo).
+
+Backups mensais - reciclados anualmente se utilizado um ano de retenção, salvo se a política de backup corporativa determine retenções totais diferentes. 
+
+Efeitos do uso de GFS -
+- Máxima retenção de backup com um mínimo consumo de armazenamento; 
+
+- Sacrifica granularidade para a restauração ao longo do tempo, baseado no fato de que o usuário naturalmente deixa de necessitar de versões específicas de determinado arquivo ao longo do tempo; 
+
+/////////////
+
+O bacula - 
+Suporta praticamente qualquer dispositivo de armazenamento (disco rígido, fita magnética, blue ray, etc) para armazenamento de backups; 
+
+O bacula é um sofware de backup em rede; é 100% modular, ele tem o director (dir), q é o servidor de backup propriamente direto, quem comanda todas as operaçoes de backup; storage daemon (sd) que é onde vc armazena os dados de backup; file daemon (Fd) é o cliente do bacula isto é, de onde extrair os dados do backup, CATALOG (database) é o banco de dados do bacula; e consoles (Desktop & Web) posso ter consoles textos, graficos, web, etc. 
+
+Regras implicitas: O Director deve ter ao menos instalado também um file daemon (cliente) na mesma máquina para realizar backup de suas configuraçoes, logs, etc.
+
+O servidor do bacula, tbm precisamos ter backup de suas configuraçoes, do banco de dados do bacula, etc, pois o servidor do bacula tb ta passivel de desastres.  
+
+Versões dos clientes devem sempre ser a mesma ou inferior ao Director. Em outras palavras: Jamais use um cliente com versão superior (mais novo) que o Director. 
+
+O Bacula tem uma versão específica q possui plugins para facilitar o backup de aplicações específicas (Oracle, Postgresql, Microsoft Exchange, etc) e melhoria de perfomance (block level backup, NDMP, etc). 
+
+///////////////////////
+
+Bacula 9.4 Communiy Repositórios - 
+Temos o bacula enterprise q possui interface gráfica, etc, e temos tbm o bacula community.
+
+Temos o Driver Aligned, que é um plugin que fica no Storage Daemon, que é para o bacula gravar backups em disco, que podem ser duplicados através de um sistema de arquivos com deduplicação, como o XFS, etc. Na versão Community temos tbm o Driver S3 q é o plugin para armazenar dados na nuvem, no da Microsoft, etc... Temos a interface Baculum GUI também, que é uma interface gráfica q podemos fazer bastante coisa. Temos também o REST API, que se você quiser fazer alguma integração a um portal, etc, está mais fácil. 
