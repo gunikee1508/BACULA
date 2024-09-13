@@ -208,3 +208,400 @@ Bacula 9.4 Communiy Repositórios -
 Temos o bacula enterprise q possui interface gráfica, etc, e temos tbm o bacula community.
 
 Temos o Driver Aligned, que é um plugin que fica no Storage Daemon, que é para o bacula gravar backups em disco, que podem ser duplicados através de um sistema de arquivos com deduplicação, como o XFS, etc. Na versão Community temos tbm o Driver S3 q é o plugin para armazenar dados na nuvem, no da Microsoft, etc... Temos a interface Baculum GUI também, que é uma interface gráfica q podemos fazer bastante coisa. Temos também o REST API, que se você quiser fazer alguma integração a um portal, etc, está mais fácil. 
+
+- Compilação: construir os codigos binários, dá mais trabalho mas pode ser q vc esteja em um SO/servidor com um sistema não muito comum; 
+Pacontes nativos das distros: Do Debian, do centos, etc.
+O mais recomendado é utilizar os repositórios também de yum apt mas tbm pelos pacotes atualizados no Bacula.org (repositorios)
+
+Os caminhos para configuraçao do bacula ficam dentro de: /opt/bacula/etc
+
+No /opt/bacula/bin temos os binários, executáveis, etc; 
+
+No /opt/bacula/scripts temos os scripts, como o script q cria o BD do Bacula;
+
+No /opt/bacula/working temos a depuração de tracer, arquivos de lock, etc; 
+
+Usaremos os CentOS 7 com PostgreSQL;
+
+instalar o bacula:
+bacula.lat > community > instalaçao > pacotes bacula.org 
+
+Quando recebemos o pacote, no caso nossa URL é: https://www.bacula.org/packages/66b491e036fce/rpms/
+
+a chave (key) é nada mais que o codigo: 66b491e036fce
+
+Instalando o bacula no CentOS, vamos fazer a instalação manual CentOS que tem no site do bacula.lat (https://www.bacula.lat/community/script-instalacao-bacula-community-9-x-pacotes-oficiais/); 
+
+Abrimos o terminal, seguindo o tutorial da instalaçao manual, a gente escreva no terminal:
+bacula_version="9.4.3"
+
+bacula_key="66b491e036fce"
+
+E vou seguindo o resto dos passos. 
+
+ao terminar tudo, e acessar dando o comando: 
+
+bconsole 
+
+se acessar o terminal do bacula, significa que deu tudo certo. 
+
+dou um ps -aux | grep bacula -> pra ver se os 3 daemons do bacula foram instalados; 
+
+//////////////
+
+Instalação Baculum GUI 9.4 - 
+
+É a instalaçao da interface grafica do bacula community; 
+A interfaces gráficas que temos hoje para o bacula: 
+- Baculum
+- BAT (Desktop)
+- BWeb (Enterprise)
+
+-Webmin 
+-Webacula
+
+O Baculum tem 2 serviços na verdade: 
+- Rest API (que permite manipular o bacula inteiro através de comandos)
+- Baculum (interface gráfica, q acessa diretamente a API)
+
+O Baculum (Baculum.org) tem seu repositorio proprio do baculum; 
+
+https://www.bacula.lat/community/baculum/
+
+aí tenho o tutorial de instalaçao do Baculum; 
+
+A verificação default do Postgres é PEER, ou seja, verifica se o usuario do Linux (no caso é o Apache) tem permissão lá no Postgres. O 'Trust' aceita todas conexões LOCAIS, mas não aceita conexões remotas; 
+
+No CentOS, após a instalação, acesso o localhost:9096/ 
+
+Ao avançar nos passos, peço pro Bacula configurar meu baculum. 
+
+Na parte de 'autorização da API' vai pedir usuario e senha para a API Bacula; 
+
+///////////
+
+Alternativa de instalaçao, pelos pacotes da distribuição CENTOS 6.5 -
+
+Digito:
+yum install postgresql-server
+
+Após instalar, dou um service postgresql initdb
+
+e em seguida inicializo:
+/etc/init.d/postgresql start 
+
+caso a porta esteja bloqueada, basta ir lá no /etc/selinux/config e coloco 'disable enforcing';
+
+em seguida, dou um iptables --flush para descartar as regras; 
+
+após o postgres estiver rodando, prosseguimos com a instalação do Bacula. Somente o bacula storage varia pelo banco de dados, o client não. 
+
+Em seguida dou um yum install bacula-director-postgresql bacula-storage-postgresql bacula-client bacula-console bacula-console-qt
+
+- 'bacula-console' é o terminal/console do bacula, e 'bacula-console-qt' é a interface grafica do console bacula; 
+
+- To instalando o 'bacula-client' no servidor do bacula pq tbm vou querer fazer backup desse director/servidor; to instalando o 'storage' porque vou querer armazenar meus backups no mesmo servidor; 
+
+dou um /etc/init.d/bacula- [TAB] pra subir os daemons do bacula q aparecer;
+
+Digito:
+/etc/init.d/bacula-fd start -> para subir o daemon cliente (FD é de file daemon)
+
+Vamos rodar os scripts: 
+/usr/libexec/bacula/create_[TAB] , vai aparecer para criar o banco postgresql pro bacula 
+
+/usr/libexec/bacula/create_postgresql_database
+
+
+.....
+
+/////////////////
+
+O primeiro backup - 
+
+Se nunca fiz nenhum backup no servidor, o proprio Bacula promove um backup full; 
+
+Quando tiver 'debian-sd' é Bacula Storage Daemon; 
+
+No /etc/bacula/bacula-sd.conf é onde vamos configurar o backup. Em 'Archive Device' é onde iremos ARMAZENAR nosso backup; 
+
+Agora, reinicia o storage:
+/etc/init.d/bacula-sd restart (OBS: Dar restart aborta qualquer job em execução)
+
+Agora, dou um 'bconsole', em seguida: 'run' 
+
+'label' -> comando que cria, manualmente, os volumes . qd digito o 'label', ele cria, na pasta em que defini o Archive Device, um arquivo 
+
+
+Posso listar o conteúdo do meu backup também. Dando um 'list jobs' vejo os backups;
+
+Posso saber o que tem dentro dos backups digitando:
+list files jobid=NUMERODOJOBID
+
+ex: list files jobid=2
+
+Essa informação ele não busca no volume, ele busca do BANCO DE DADOS DO BACULA; 
+
+//////////////
+
+Aspectos da Instalação Fresca - 
+
+No /etc/bacula temos os arquivos de configuração do bacula; Cada daemon do bacula tem seu proprio arquivo de configuração; 
+
+Se o objetivo for conectar no mesmo director, o arquivo de configuraçao do bat.conf e do bconsole.conf podem ser iguais (o conteúdo dentro dos 2 arquivos);
+
+///////////
+
+Pós instalação - primeiros passos
+
+O primeiro backup - 
+
+Se eu submeto um backup numa Pool 'File', preciso ter um volume na Pool 'File' para que o Bacula possa estar realizando o backup; 
+
+Ao digitar 'label' ele pede o nome do volume, a 'pool', etc. 
+
+Ao fazer a label, o bacula começa a gravar no volume, e depois de um tempo o bacula mostra as mensagens (comando 'm' ou 'messages')
+
+o comando 'label' do bacula nada mais faz que cria um arquivo em /backup. Este arquivo vai crescendo, vai anexando dados nele; Lembrando q o bacula é o unico que tem gravação aberta, isto é, se eu der um more no arquivo, teremos alguns arquivos texto claro nele; 
+
+Ao dar 'list jobs', teremos 'jobstatus'. O 'f' significa de 'falha', o 'T' significa que foi SUCESSO.  
+
+Dando um 'show fileset' mostra a lista de arquivos q estão sendo backupeados; 
+
+/////////////////
+
+O Primeiro Restore - 
+
+Já fizemos nosso 1o backup, se tiver na dúvida digite 'list jobs'; 
+
+Para rodar a restauração, jamais use o comando 'run'. Embora nele tenha o comando 'RestoreFiles', é uma restauração genérica; Não preciso criar um backup restore pra cada servidor, basta ter um genérico; 
+
+Para rodar o 'restore', usemos o comando: 
+restore 
+
+Ele dará um monte de opção para saber o que restaurar; 
+
+se eu der: 'mark zic', vai marcar o arquivo de nome 'zic'.
+se eu der: mark x* -> vai marcar todos arquivos que começam com a letra 'x'; 
+
+para eu desmarcar algum arquivo q eu tenha marcado por engano:
+'unmark zic' -> desmarquei o arquivo 'zic'. 
+
+pra finalizar a seleçao do meu 'restore', uso o comando 'done'; 
+
+////////////////
+
+bacula-dir.conf (Director) -
+
+Todos arquivos de configuraçao do bacula geralmente tem o mesmo padrão q se repete; 
+Sempre vai ter um recurso (Abre e fecha chaves) que define a ele mesmo; 
+
+Então, exemplo: o recurso 'Director' dentro de bacula-dir.conf define quem ele é, o nome dele, que porta está escutando, e outras configuraçoes gerais;     
+
+A autenticação do bacula é feita não somente pela senha, mas também pelo nome do Director (no bacula-sd.conf tem o Director com name 'bacula-dir' e password '...'). 
+
+No arquivo tem configuraçao, tem 'maximum cuncurrent jobs', que quer dizer que para este director sempre vou poder rodar apenas 1 job de cada vez. Se eu submeter 20 backups de servidores diferentes de uma vez, pro Director será um de cada vez. Executará um, dps outro, assim consecutivamente. Porém, o ideal é fazer o maximo de backup simultaneos;  tem tbm 'password' para o 'Director'.
+
+Em 'messages' é responsável por direcionar as mensagens do directory (mandar email, salvar na log, etc)
+
+/////////////////
+
+bacula-dir.conf (Jobs & Job Defs) - 
+
+É neste arquivo que começamos a configurar nossos jobs de backup;
+
+Neste arquivo, temos os 'jobdefs' e 'job'. 
+
+no mundo ideal, a medida que vamos adicionando clientes neste servidor, a gente vai criar novos jobs de backup. ou seja, para cada cliente temos novos jobs de backup, pelo menos 1 para cada cliente; porém, para estes jobs de backup é mt provavel que tenham-se opçoes q se repetem. tipo 'level', é só o level padrao, nao tem para q para cada job de backup especificar um level padrão diferente. level padrão é aquilo que quando, no console, digito o comando 'run' e me mostram as opções; \/
+
+para eu não ter que especificar tudo isto novamente, eu tenho os 'jobdefs'. 'jobdefs { }' é uma especie de opçoes padrão, como uma classe de job, e quando eu digo no 'job { }' oq vou usar, é como se eu trouxesse tudo o que está no 'JobDefs' e trouxesse para o 'Job'; nem todos os meus jobs usarão o mesmo cliente (client) que está em JobDefs, então posso especificar especificar o client no 'Job'. 
+
+Exemplo: 
+JobDefs {
+    Name = "DefaultJob"
+    Type = Backup 
+    Level = Incremental 
+    Client = bacula-fd 
+    FileSet = "Full Set"
+    Schedule = "WeeklyCycle"
+    Storage = File
+    Messages = Standard
+    Pool = File
+    Priority = 10
+    Write Bootstrap = "/var/spool/bacula/%c.bsr"
+}
+
+Job {
+    Name = "BackupClient1"
+    JobDefs = "DefaultJob"
+    Client = xpto-fd
+}
+
+Job {
+    Name = "BackupCatalog"
+    JobDefs = "DefaultJob"
+}
+
+não importa o client q estiver em 'jobdefs', mas sim o client que estiver especificado em 'Job';
+
+'FileSet' ser 'full set' é o FileSet que já existe, tá configurado no bacula-dir.conf, aquele que so ta fazendo backup do /usr/bin
+'Schedule' tá chamando a agenda 'WeeklyCycle', que é uma agenda que está no bacula-dir.conf
+Priority = vai de 0 a 99, 0 é a maior prioridade. 99 é a menor prioridade; 
+
+Tem um job muito especial/especifico, que é o job de backup do CATALOGO. Nome: "BackupCatalog", ou seja, do banco de dados do Bacula; 
+Este Bacula tem uma linha de cmd chamado 'RunBeforeJob' que é qual é a execução de scripts antes do 'Job'; E em seguida terá uma linha de comando que é a execução de scripts depois do Job' (RunAfterJob); Pode ser que voce precise executar uma linha de script antes ou depois do backup para que o backup seja íntegro; MYSQL precisa gerar um 'dump' no minimo para poder fazer o backup; Postgres poderá fazer via dump, ou colocar banco em modo backup; A vantagem de fazer isto tudo pelo bacula, é que teremos log no bacula caso dê erro; 
+
+Neste job, temos um FileSet especifico chamado 'Catalog', que ns bifro suls, faz um dump do banco de dados do Bacula (é para onde o File está apontando);
+
+No 'Job' voce pode configurar para onde vai o backup, para fita ou para disco; 
+
+O 'dump' não é mt bem um backup, mas é uma copia espelho sim do banco de dados, embora muita gente entende-se como backup; 
+
+A opção 'RunBeforeJob', se for apenas 'RunBeforeJob' rodará no servidor de backup. Se eu adicionar 'client', ficando 'ClientRunBeforeJob', rodará no cliente; como o servidor é o mesmo que o cliente no da video-aula, tanto faz; 
+
+////////////////
+
+bacula-dir.conf (Job Restore) - 
+
+No bacula-dir.conf, teremos um recurso que define ele mesmo, em que porta ele ta escutando, características gerais de seu funcionamento, etc; 
+
+O Job de restore já temos o comando 'Restore' que já faz tudo para vc na hora de restaurar um arquivo; A única coisa que voce pode querer trocar, é ali na opção 'Where' do Job de 'RestoreFiles', que é o diretório padrão para restaurar na hora que voce submeter um job de restauração; No caso, acredito q o padrão esteja '/tmp/bacula-restores', mas posso modificar isto.
+
+Na hora de fazer 'restore', posso trocar o diretorio:
+
+bconsole 
+restore 
+escolho opçao 5
+mark * 
+aparecerá o 'where' que é o caminho dito; 
+
+/////////////////
+
+bacula-dir.conf (FileSets) -
+As opções do FileSet são muito extensas. Dentro, teremos o 'exclude': o atributo exclude no elemento <fileset> do Ant é usado para excluir arquivos ou diretórios específicos do conjunto de arquivos definido; 
+
+O atributo Include no arquivo de configuração bacula-dir.conf do Bacula é usado para incluir configurações de outros arquivos. em 'file = /etc' significa que vamos incluir as configuraçoes do sistema no backup; 
+se fosse do windows, fariamos: 
+File = "C:/Arquivos de Programas" 
+
+//////////////////
+
+bacula-dir.conf (Schedule) - 
+
+O 'schedule' do bacula é onde voce vai fazer toda programação/automaçao do seu backup;  
+
+Fazendo uma segunda agenda de backup:
+Schedule {
+    Name="WeeklyCycle"
+    Run = Full 1st sun at 23:05
+    Run = Differential 2nd-5th sun at 23:05
+    Run = Incremental mon-sat at 23:05
+}
+
+Especificando dia da semana:
+Schedule {
+    Name="WeeklyCycle"
+    Run = Full monday-thursday 1st sun at 23:05
+    Run = Differential 2nd-5th sun at 23:05
+    Run = Incremental mon-sat at 23:05
+}
+
+Full monday-thursday 1st sun at 23:05 => ele faz backup Full de segunda a quinta-feira às 23:05
+
+Schedule {
+    Name= "WeeklyCycle"
+    Run = Incremental Pool=Diaria monday-thursday 1st sun at 23:05
+    Run = Full Storage = xpto 2nd-5th sun at 23:05
+    Run = Incremental mon-sat at 23:05
+}
+
+Incremental Pool=Diaria monday-thursday 1st sun at 23:05 => todo backup q eu rodar de segunda a quina feira as 23:05 vai rodar na pool Diaria. 
+Full Storage = xpto 2nd-5th sun at 23:05 => Significa que vai salvar o backup full no Storage 'xpto' do 2º dia ao 5º domingo (sun é sunday abreviado) do mês faça o backup full.
+
+////////////////////
+
+bacula-dir.conf (Client e Storage) - 
+
+Para que o director faça backup, é necessário que se configure no bacula-dir.conf; 
+
+File Retention != Job Retention; 
+
+Mesmo principio do Client se aplica ao Storage; para cada dispositivo de disco que eu queira fazer backup, farei um storage daemon na maquina onde o dispositivo está anexado no bacula-dir.conf, tendo o endereço IP, a senha, e o nome do 'Device', que estão configurados no bacula-sd.conf, então tem que casar com oq estiver configurado lá;  
+
+/////////////////////
+
+bacula-dir.conf (Catalog e Messages) - 
+
+Neste arquivo, depois de Storage, a proxima entrada q eu tiver é o Catalog; isto é, configurar a maneira como o Bacula configura o banco de dados dele; 
+
+No 'catalog' posso especificar um drive pro banco de dados, um endereço diferente, etc. Em tese, posso ter um Director se comunicando com 2 bancos de dados diferentes; 
+
+Outros jobs de backups eu usaria nomes de catálogos diferentes; 
+
+O Bacula tem 2 recursos Messages: 
+1 - Standard (saida padrão )
+2- Daemon, q são mensagens do Daemon do tipo monitoraçao etc;  
+
+///////////////////
+
+bacula-dir.conf (Pool e Monitor) - 
+
+Depois de configurar tudo, temos que configurar a retenção (volume retention), ou seja, por que periodo de tempo aquele backup que voce faz vai ficar armazenado/retido pela ferramenta de backup; Quando eu submeto um job de backup, eu submeto a uma pool, e dentro dessa pool q eu configuro o comportamento dele; O ideal em backup em disco o ideal é que se tenham vários volumes por disco, e isso voce consegue ir limitando o tamanho do volume ; 
+
+Temos uma Pool padrão chamada 'pool scratch'. Ela vem configurada no arquivo padrão de configuração do “director” (bacula-dir.conf) permite que os novos volumes criados, que a ela estejam associados, sejam automaticamente migrados pelo “Bacula” para outras “pools” criadas, na medida que seja necessário.
+
+Monitor:
+O arquivo de configuração do Monitor é uma versão simplificada do arquivo de configuração do Director, misturado com um arquivo de configuração do Console. Ele simplesmente contém as informações necessárias para contatar os Directors, Clients e Storage daemons que você deseja monitorar.
+
+O recurso Monitor define os atributos do Monitor em execução na rede. Os parâmetros que você define aqui devem ser configurados como um recurso Director nos arquivos de configuração Clients e Storages, e como um recurso Console nos arquivos de configuração Directors.
+
+//////////////////////
+
+bacula-sd.conf - 
+
+É bem menor que o bacula-dir.conf; 
+
+Primeiro ele define o proprio daemon:
+Storage {
+    Name = bacula-sd 
+    SDPort = 9103
+    WorkingDirectory = "/var/spool/bacula"
+    Pid Directory = "/var/run"
+    Maximum Cuncurrent Jobs = 20
+}
+
+/\ este sd (storage daemon) so roda 20 storages simultaneamente. mais q isso, fica em standby.
+
+Em: 
+Director {
+    Name = bacula-dir
+    Passowrd = "senha_storage"
+}
+
+/\ São os directors que podem estar se conectando para poder armazenar dados; Posso ter ate mais de um director se comunicando a um storage; 
+
+E por fim, os dispositivos em si (Devices { }), que são os mais importantes do Storage Daemon. 
+
+Em 'Archive Device' poderia ser qualquer dispositivo/disco de onde queira armazenar os arquivos de backup; 
+
+Se for trabalhar com outro disco, teria outro Device { }, e dentro, outro ponto de montagem;  
+
+Pode ser que precfise trabalhar com multiplos discos, para isto procure sobre no site do Bacula; 
+
+Se eu der um 'lsscsi' para ver os dispositivos scsi (dispositivos como discos rigidos etc); 
+
+Em 'AutoChanger' voce configura o caminho para o drive de fitas; e em 'device' voce configura o drive de fitas em si; 
+
+O atributo 'Media Type' só serve pra definir uma matriz de compatibilidade entre seus storages; Só use 'media type' diferentes se voce realmente entender que os volumes sao incompativeis (ex: de disco para fitas); 
+
+////////////////////
+
+bacula-fd.conf - 
+
+É o arquivo de configuraçao do Cliente; 
+
+/////////////
+
+Novos Clientes -
+
+Novo cliente Linux - 
